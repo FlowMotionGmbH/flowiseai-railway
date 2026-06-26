@@ -13,7 +13,7 @@ RUN apk add --no-cache python3 py3-setuptools make g++ build-base
 RUN npm install -g flowise
 
 # Upgrade @langchain/aws und AWS SDK für Prompt Caching Support
-RUN cd /usr/local/lib/node_modules/flowise && npm install @langchain/aws@1.3.9 @aws-sdk/client-bedrock-runtime@3.1006.0
+RUN cd /usr/local/lib/node_modules/flowise && npm install @langchain/aws@1.3.9 @aws-sdk/client-bedrock-runtime@3.1006.0 ws
 
 # Stage 2: Runtime stage
 FROM node:20-alpine
