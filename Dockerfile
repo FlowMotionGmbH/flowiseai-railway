@@ -6,6 +6,9 @@ USER root
 # Skip downloading Chrome for Puppeteer (saves build time)
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 
+# Install build dependencies needed for native modules
+RUN apk add --no-cache python3 make g++ build-base
+
 # Install latest Flowise globally (specific version can be set: flowise@1.0.0)
 RUN npm install -g flowise
 
