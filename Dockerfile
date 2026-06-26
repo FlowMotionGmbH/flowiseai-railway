@@ -9,6 +9,9 @@ ENV PUPPETEER_SKIP_DOWNLOAD=true
 # Install latest Flowise globally (specific version can be set: flowise@1.0.0)
 RUN npm install -g flowise
 
+# Upgrade @langchain/aws und AWS SDK für Prompt Caching Support
+RUN cd /usr/local/lib/node_modules/flowise && npm install @langchain/aws@1.3.9 @aws-sdk/client-bedrock-runtime@3.1006.0
+
 # Stage 2: Runtime stage
 FROM node:20-alpine
 
