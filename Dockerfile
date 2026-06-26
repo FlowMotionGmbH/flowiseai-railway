@@ -6,8 +6,14 @@ USER root
 # Skip downloading Chrome for Puppeteer (saves build time)
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 
+# Install build dependencies needed for native modules
+RUN apk add --no-cache python3 make g++ build-base
+
 # Install latest Flowise globally (specific version can be set: flowise@1.0.0)
 RUN npm install -g flowise
+
+# Upgrade @langchain/aws und AWS SDK für Prompt Caching Support
+RUN cd /usr/local/lib/node_modules/flowise && npm install @langchain/aws@1.3.9 @aws-sdk/client-bedrock-runtime@3.1006.0
 
 # Stage 2: Runtime stage
 FROM node:20-alpine
