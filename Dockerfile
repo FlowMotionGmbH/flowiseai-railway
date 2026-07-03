@@ -29,6 +29,8 @@ COPY --from=build /usr/local/lib/node_modules /usr/local/lib/node_modules
 COPY --from=build /usr/local/bin /usr/local/bin
 
 # Set environment variables
+RUN echo "const WebSocket = require('/usr/local/lib/node_modules/flowise/node_modules/ws'); globalThis.WebSocket = WebSocket;" > /usr/local/lib/ws-polyfill.js
+ENV NODE_OPTIONS="--require /usr/local/lib/ws-polyfill.js"
 ENV PORT=80
 
 # Expose the specified port
