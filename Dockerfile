@@ -10,7 +10,10 @@ RUN npm install -g flowise
 # Upgrade @langchain/aws und AWS SDK für Prompt Caching Support
 RUN cd /usr/local/lib/node_modules/flowise && npm install @langchain/aws@1.3.9 @aws-sdk/client-bedrock-runtime@3.1006.0 ws
 # Patch Flowise Bedrock Node to enable Prompt Caching (cache_control)
-RUN sed -i "s/const params = super.invocationParams(options);/const params = super.invocationParams(options);\n        params.cache_control = { type: 'default' };/" /usr/local/lib/node_modules/flowise/node_modules/flowise-components/dist/nodes/chatmodels/AWSBedrock/FlowiseAWSChatBedrock.js
+RUN sed -i \
+    -e "s/async _generate(messages, options, runManager) {/async _generate(messages, options, runManager) {\n        options.cache_control = { type: 'default' };/" \
+    -e "s/async \*_streamResponseChunks(messages, options, runManager) {/async *_streamResponseChunks(messages, options, runManager) {\n        options.cache_control = { type: 'default' };/" \
+    /usr/local/lib/node_modules/flowise/node_modules/flowise-components/dist/nodes/chatmodels/AWSBedrock/FlowiseAWSChatBedrock.js
 # Stage 2: Runtime stage
 FROM node:20-alpine
 # Install runtime dependencies
