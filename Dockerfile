@@ -11,9 +11,12 @@ RUN npm install -g flowise
 RUN cd /usr/local/lib/node_modules/flowise && npm install @langchain/aws@1.3.9 @aws-sdk/client-bedrock-runtime@3.1006.0 ws
 # Patch Flowise Bedrock Node to enable Prompt Caching (cache_control)
 RUN sed -i \
-    -e "s/async _generate(messages, options, runManager) {/async _generate(messages, options, runManager) {\n        options.cache_control = { type: 'default' };/" \
-    -e "s/async \*_streamResponseChunks(messages, options, runManager) {/async *_streamResponseChunks(messages, options, runManager) {\n        options.cache_control = { type: 'default' };/" \
+    -e "s/    setMultiModalOption(multiModalOption) {/    async _generate(messages, options, runManager) {\n        options.cache_control = { type: 'default' };\n        return await super._generate(messages, options, runManager);\n    }\n    async *_streamResponseChunks(messages, options, runManager) {\n        options.cache_control = { type: 'default' };\n        yield* super._streamResponseChunks(messages, options, runManager);\n    }\n    setMultiModalOption(multiModalOption) {/" \
     /usr/local/lib/node_modules/flowise/node_modules/flowise-components/dist/nodes/chatmodels/AWSBedrock/FlowiseAWSChatBedrock.js
+# Verify the patch actually applied — fail the build loudly if not
+RUN grep -q "options.cache_control = { type: 'default' };" /usr/local/lib/node_modules/flowise/node_modules/flowise-components/dist/nodes/chatmodels/AWSBedrock/FlowiseAWSChatBedrock.js \
+    && echo "✅ CACHE PATCH APPLIED SUCCESSFULLY" \
+    || (echo "❌ CACHE PATCH FAILED — PATTERN NOT FOUND IN SOURCE FILE" && exit 1)
 # Stage 2: Runtime stage
 FROM node:20-alpine
 # Install runtime dependencies
