@@ -7,8 +7,16 @@ ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN apk add --no-cache python3 py3-setuptools make g++ build-base
 # Install latest Flowise globally (specific version can be set: flowise@1.0.0)
 RUN npm install -g flowise
-# Upgrade @langchain/aws und AWS SDK für Prompt Caching Support
-RUN cd /usr/local/lib/node_modules/flowise && npm install @langchain/aws@1.3.9 @aws-sdk/client-bedrock-runtime@3.1006.0 ws
+# Upgrade @langchain/aws und AWS SDK für Prompt Caching Support (inkl. aller verschachtelten Kopien)
+RUN cd /usr/local/lib/node_modules/flowise && npm install @langchain/aws@1.3.9 @aws-sdk/client-bedrock-runtime@3.1006.0 ws && \
+    UPGRADED=/usr/local/lib/node_modules/flowise/node_modules/@langchain/aws && \
+    for dir in $(find /usr/local/lib/node_modules/flowise -type d -name aws); do \
+        PARENT=$(dirname "$dir"); \
+        PARENTNAME=$(basename "$PARENT"); \
+        if [ "$PARENTNAME" = "@langchain" ] && [ "$dir" != "$UPGRADED" ]; then \
+            rm -rf "$dir" && cp -r "$UPGRADED" "$dir"; \
+        fi; \
+    done
 # Patch Flowise Bedrock Node to enable Prompt Caching (cache_control)
 RUN sed -i \
     -e "s/    setMultiModalOption(multiModalOption) {/    async _generate(messages, options, runManager) {\n        options.cache_control = { type: 'default' };\n        try { console.log('CACHE_PATCH_DEBUG @langchain\/aws version:', require('@langchain\/aws\/package.json').version); } catch(e) { console.log('CACHE_PATCH_DEBUG version check failed:', e.message); }\n        return await super._generate(messages, options, runManager);\n    }\n    async *_streamResponseChunks(messages, options, runManager) {\n        options.cache_control = { type: 'default' };\n        try { console.log('CACHE_PATCH_DEBUG @langchain\/aws version:', require('@langchain\/aws\/package.json').version); } catch(e) { console.log('CACHE_PATCH_DEBUG version check failed:', e.message); }\n        yield* super._streamResponseChunks(messages, options, runManager);\n    }\n    setMultiModalOption(multiModalOption) {/" \
